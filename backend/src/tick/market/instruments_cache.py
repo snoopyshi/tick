@@ -44,6 +44,45 @@ def clear_instruments_cache() -> None:
     _instruments.clear()
 
 
+def list_instruments(
+    *,
+    q: str | None = None,
+    asset_types: list[str] | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[Instrument], int]:
+    """Filter in-memory instruments; return ``(page_items, total)``.
+
+    Empty ``asset_types`` means no asset-type filter (all types).
+    ``q`` matches ``symbol`` / ``ticker`` / ``name`` case-insensitively.
+    """
+    if limit < 1:
+        raise ValueError("limit must be >= 1")
+    if offset < 0:
+        raise ValueError("offset must be >= 0")
+
+    query = (q or "").strip().casefold()
+    allowed_types = {value for value in (asset_types or []) if value}
+
+    matched: list[Instrument] = []
+    for instrument in _instruments.values():
+        if allowed_types and instrument.asset_type not in allowed_types:
+            continue
+        if query:
+            haystacks = (
+                instrument.symbol.casefold(),
+                instrument.ticker.casefold(),
+                instrument.name.casefold(),
+            )
+            if not any(query in text for text in haystacks):
+                continue
+        matched.append(instrument)
+
+    matched.sort(key=lambda item: item.symbol)
+    total = len(matched)
+    return matched[offset : offset + limit], total
+
+
 def load_instruments_into_memory(path: Path | None = None) -> dict[str, Instrument]:
     """Load canonical instruments parquet into ``symbol -> Instrument``."""
     source = path or settings.paths.market_instruments

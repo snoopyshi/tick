@@ -21,6 +21,7 @@ import {
   AudioWaveform,
   Command,
   GalleryVerticalEnd,
+  CandlestickChart,
 } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -56,6 +57,11 @@ export const sidebarData: SidebarData = {
           title: '仪表盘',
           url: '/',
           icon: LayoutDashboard,
+        },
+        {
+          title: '标的',
+          url: '/instruments',
+          icon: CandlestickChart,
         },
         {
           title: '任务',
