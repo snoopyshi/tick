@@ -44,10 +44,15 @@ docker run --rm -p 8000:8000 tick
     a_share_daily_k_1d_none_10y_20261117.parquet
   raw/ths/corp_actions/
     a_share_adjustment_factors_event_none_all_20261117.parquet
+  raw/ths/tickers/
+    tickers.parquet                         # 同花顺标的列表快照（经扶摇 API）
   market/ohlcv/1d/
     a_share_daily_k_1d.parquet              # 系统标准日 K
   market/corp_actions/
     a_share_corp_actions.parquet            # 系统标准除权事件
+  market/instruments/
+    instruments.parquet                     # 系统标的主表
+    vendor_symbol_map.parquet               # 厂商码 → 系统 symbol
 ```
 
 把同花顺原始文件放到 `raw/ths/...` 后转换：
@@ -57,8 +62,23 @@ uv run tick-ingest-ths-daily
 uv run tick-ingest-ths-corp-actions
 ```
 
+经扶摇 HTTP 网关拉取同花顺标的列表并写入系统主数据（需配置 `FUYAO_KEY`；厂商统一为 `ths`；系统 `symbol` = `thscode`，如 `600519.SH`）。默认同时拉取 **A 股**与 **A 股指数**（`a-share,a-share-index`）：
+
+```bash
+uv run tick-ingest-fuyao-tickers
+# 仅股票或仅指数：
+uv run tick-ingest-fuyao-tickers --asset-type a-share
+uv run tick-ingest-fuyao-tickers --asset-type a-share-index
+# 或仅转换已有 raw：
+uv run tick-ingest-fuyao-tickers --no-fetch
+```
+
 - 标准日 K：`symbol, trade_date, open, high, low, close, volume, amount, adjust, vendor, currency`
 - 标准除权事件：`symbol, ex_date, dividend_per_share, bonus_per_share, allotment_ratio, allotment_price, vendor, currency`
+- 标准标的：`symbol, ticker, name, exchange, asset_type, currency, list_date, end_date, last_trade_date, last_delivery_date, updated_at`
+- 厂商映射：`vendor, vendor_symbol, symbol, is_primary`
+
+启动时会把 `market/instruments/instruments.parquet` 与日 K 一并载入进程内存（`symbol → Instrument` / `symbol → OhlcvSeries`）。文件不存在时跳过并打 warning。
 
 ## 检查
 

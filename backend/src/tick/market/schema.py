@@ -30,3 +30,48 @@ CORP_ACTION_COLUMNS: Final[tuple[str, ...]] = (
     "vendor",
     "currency",
 )
+
+# System instrument master (symbol form: 600519.SH / index thscode).
+INSTRUMENT_COLUMNS: Final[tuple[str, ...]] = (
+    "symbol",
+    "ticker",
+    "name",
+    "exchange",
+    "asset_type",
+    "currency",
+    "list_date",
+    "end_date",
+    "last_trade_date",
+    "last_delivery_date",
+    "updated_at",
+)
+
+# Maps vendor-native codes onto system symbols.
+VENDOR_SYMBOL_MAP_COLUMNS: Final[tuple[str, ...]] = (
+    "vendor",
+    "vendor_symbol",
+    "symbol",
+    "is_primary",
+)
+
+# Fuyao / system asset-type leaves (request filter + instrument.asset_type).
+ASSET_TYPES: Final[frozenset[str]] = frozenset(
+    {
+        "a-share",
+        "a-share-index",
+        "fund-otc",
+        "fund-etf",
+        "fund-lof",
+        "fund-reits",
+        "forex",
+        "futures",
+        "futures-commodity-index",
+        "options",
+    }
+)
+
+# Default ticker-list ingest covers A-share stocks and indices.
+DEFAULT_TICKER_ASSET_TYPES: Final[tuple[str, ...]] = (
+    "a-share",
+    "a-share-index",
+)

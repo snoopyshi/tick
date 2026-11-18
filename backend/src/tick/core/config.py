@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     static_dir: str = ""
     # Relative paths resolve against the process cwd (usually backend/).
     data_dir: Path = Field(default=Path("./data"))
+    # Fuyao HTTP gateway for THS (同花顺) meta/ticker APIs; vendor id remains "ths".
+    fuyao_key: str = ""
+    fuyao_base_url: str = "https://fuyao.aicubes.cn"
     cors_origins: Annotated[
         list[str],
         NoDecode,
