@@ -15,7 +15,9 @@ import { FontProvider } from './context/font-provider'
 import { ThemeProvider } from './context/theme-provider'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
-// Styles
+// Styles — fonts are self-hosted (no Google Fonts CDN)
+import '@fontsource-variable/inter/wght.css'
+import '@fontsource-variable/manrope/wght.css'
 import './styles/index.css'
 
 const queryClient = new QueryClient({
