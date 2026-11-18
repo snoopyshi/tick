@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
@@ -7,7 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from tick import __version__
 from tick.api.router import api_router
 from tick.core.config import settings
+from tick.core.logging import configure_tick_logging
 from tick.web import mount_frontend
+
+
+@asynccontextmanager
+async def lifespan(_application: FastAPI):
+    configure_tick_logging()
+    settings.paths.ensure()
+    yield
 
 
 def create_app() -> FastAPI:
@@ -18,6 +27,7 @@ def create_app() -> FastAPI:
         docs_url="/docs" if settings.docs_enabled else None,
         redoc_url="/redoc" if settings.docs_enabled else None,
         openapi_url="/openapi.json" if settings.docs_enabled else None,
+        lifespan=lifespan,
     )
     application.add_middleware(
         CORSMiddleware,

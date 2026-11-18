@@ -1,8 +1,11 @@
 import json
+from pathlib import Path
 from typing import Annotated
 
-from pydantic import BeforeValidator, field_validator
+from pydantic import BeforeValidator, Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from tick.core.paths import DataPaths
 
 
 def parse_cors_origins(value: str | list[str]) -> list[str]:
@@ -34,6 +37,8 @@ class Settings(BaseSettings):
     reload: bool = False
     api_prefix: str = "/api"
     static_dir: str = ""
+    # Relative paths resolve against the process cwd (usually backend/).
+    data_dir: Path = Field(default=Path("./data"))
     cors_origins: Annotated[
         list[str],
         NoDecode,
@@ -49,6 +54,17 @@ class Settings(BaseSettings):
         if value is None:
             return ""
         return value
+
+    @field_validator("data_dir", mode="before")
+    @classmethod
+    def parse_data_dir(cls, value: object) -> object:
+        if value is None or value == "":
+            return Path("./data")
+        return value
+
+    @property
+    def paths(self) -> DataPaths:
+        return DataPaths(root=self.data_dir.expanduser().resolve())
 
 
 settings = Settings()

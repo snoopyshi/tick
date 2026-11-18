@@ -33,6 +33,20 @@ docker run --rm -p 8000:8000 tick
 
 打开 `http://127.0.0.1:8000` 是页面，`http://127.0.0.1:8000/api/v1/health` 是健康检查。容器内进程固定监听 `0.0.0.0`，不受 `.env` 里的 `HOST` 影响。
 
+## 数据目录
+
+通过 `DATA_DIR` 配置（默认 `./data`）。启动时会创建必要子目录。把你的全市场日 K 放到约定路径：
+
+```text
+{DATA_DIR}/
+  db/                         # SQLite 位置约定（本版不建表）
+    tick.db
+  market/
+    ohlcv/
+      1d/
+        full.parquet          # 约 10 年全市场日 K（Parquet）
+```
+
 ## 检查
 
 ```bash
@@ -47,6 +61,7 @@ src/tick/
   main.py                 # 应用工厂与启动入口
   web.py                  # 托管前端构建产物
   core/config.py          # 环境变量配置
+  core/paths.py           # DATA_DIR 下路径约定
   api/v1/endpoints/       # 路由处理
   schemas/                # 请求与响应模型
 tests/
