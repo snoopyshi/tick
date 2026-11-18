@@ -39,20 +39,26 @@ docker run --rm -p 8000:8000 tick
 
 ```text
 {DATA_DIR}/
-  db/tick.db                              # SQLite 约定（本版不建表）
+  db/tick.db
   raw/ths/ohlcv/1d/
-    a_share_daily_k_1d_none_10y_20261117.parquet   # 同花顺原始日 K
+    a_share_daily_k_1d_none_10y_20261117.parquet
+  raw/ths/corp_actions/
+    a_share_adjustment_factors_event_none_all_20261117.parquet
   market/ohlcv/1d/
-    a_share_daily_k_1d.parquet                     # 系统标准日 K（业务只读这里）
+    a_share_daily_k_1d.parquet              # 系统标准日 K
+  market/corp_actions/
+    a_share_corp_actions.parquet            # 系统标准除权事件
 ```
 
-把同花顺原始文件放到 `raw/ths/...` 后，转换成系统标准数据：
+把同花顺原始文件放到 `raw/ths/...` 后转换：
 
 ```bash
 uv run tick-ingest-ths-daily
+uv run tick-ingest-ths-corp-actions
 ```
 
-标准日 K 字段：`symbol, trade_date, open, high, low, close, volume, amount, adjust, vendor, currency`。
+- 标准日 K：`symbol, trade_date, open, high, low, close, volume, amount, adjust, vendor, currency`
+- 标准除权事件：`symbol, ex_date, dividend_per_share, bonus_per_share, allotment_ratio, allotment_price, vendor, currency`
 
 ## 检查
 

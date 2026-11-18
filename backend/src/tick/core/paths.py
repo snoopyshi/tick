@@ -4,10 +4,14 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Vendor snapshot filename (keep as-is under raw/).
+# Vendor snapshot filenames (keep as-is under raw/).
 RAW_THS_OHLCV_1D_FILENAME = "a_share_daily_k_1d_none_10y_20261117.parquet"
-# Stable canonical filename used by strategies / backtests.
+RAW_THS_CORP_ACTIONS_FILENAME = (
+    "a_share_adjustment_factors_event_none_all_20261117.parquet"
+)
+# Stable canonical filenames used by strategies / backtests / UI.
 MARKET_OHLCV_1D_FILENAME = "a_share_daily_k_1d.parquet"
+MARKET_CORP_ACTIONS_FILENAME = "a_share_corp_actions.parquet"
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +38,15 @@ class DataPaths:
         return self.raw_ths_ohlcv_1d_dir / RAW_THS_OHLCV_1D_FILENAME
 
     @property
+    def raw_ths_corp_actions_dir(self) -> Path:
+        return self.root / "raw" / "ths" / "corp_actions"
+
+    @property
+    def raw_ths_corp_actions(self) -> Path:
+        """Tonghuashun original corporate-action / ex-date events."""
+        return self.raw_ths_corp_actions_dir / RAW_THS_CORP_ACTIONS_FILENAME
+
+    @property
     def market_ohlcv_1d_dir(self) -> Path:
         return self.root / "market" / "ohlcv" / "1d"
 
@@ -42,16 +55,27 @@ class DataPaths:
         """Canonical A-share daily OHLCV parquet for app use."""
         return self.market_ohlcv_1d_dir / MARKET_OHLCV_1D_FILENAME
 
+    @property
+    def market_corp_actions_dir(self) -> Path:
+        return self.root / "market" / "corp_actions"
+
+    @property
+    def market_corp_actions(self) -> Path:
+        """Canonical corporate-action events for app use."""
+        return self.market_corp_actions_dir / MARKET_CORP_ACTIONS_FILENAME
+
     def ensure(self) -> None:
         """Create the first-version data directories if missing."""
         self.db_dir.mkdir(parents=True, exist_ok=True)
         self.raw_ths_ohlcv_1d_dir.mkdir(parents=True, exist_ok=True)
+        self.raw_ths_corp_actions_dir.mkdir(parents=True, exist_ok=True)
         self.market_ohlcv_1d_dir.mkdir(parents=True, exist_ok=True)
+        self.market_corp_actions_dir.mkdir(parents=True, exist_ok=True)
         logger.info(
-            "data ready: root=%s raw_ths=%s (exists=%s) market_ohlcv_1d=%s (exists=%s)",
+            "data ready: root=%s ohlcv_1d=%s (exists=%s) corp_actions=%s (exists=%s)",
             self.root,
-            self.raw_ths_ohlcv_1d,
-            self.raw_ths_ohlcv_1d.exists(),
             self.market_ohlcv_1d,
             self.market_ohlcv_1d.exists(),
+            self.market_corp_actions,
+            self.market_corp_actions.exists(),
         )
