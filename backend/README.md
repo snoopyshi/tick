@@ -35,17 +35,24 @@ docker run --rm -p 8000:8000 tick
 
 ## 数据目录
 
-通过 `DATA_DIR` 配置（默认 `./data`）。启动时会创建必要子目录。把你的全市场日 K 放到约定路径：
+通过 `DATA_DIR` 配置（默认 `./data`）。启动时会创建必要子目录。
 
 ```text
 {DATA_DIR}/
-  db/                         # SQLite 位置约定（本版不建表）
-    tick.db
-  market/
-    ohlcv/
-      1d/
-        full.parquet          # 约 10 年全市场日 K（Parquet）
+  db/tick.db                              # SQLite 约定（本版不建表）
+  raw/ths/ohlcv/1d/
+    a_share_daily_k_1d_none_10y_20261117.parquet   # 同花顺原始日 K
+  market/ohlcv/1d/
+    a_share_daily_k_1d.parquet                     # 系统标准日 K（业务只读这里）
 ```
+
+把同花顺原始文件放到 `raw/ths/...` 后，转换成系统标准数据：
+
+```bash
+uv run tick-ingest-ths-daily
+```
+
+标准日 K 字段：`symbol, trade_date, open, high, low, close, volume, amount, adjust, vendor, currency`。
 
 ## 检查
 
@@ -62,6 +69,7 @@ src/tick/
   web.py                  # 托管前端构建产物
   core/config.py          # 环境变量配置
   core/paths.py           # DATA_DIR 下路径约定
+  market/                 # 行情标准定义与厂商适配
   api/v1/endpoints/       # 路由处理
   schemas/                # 请求与响应模型
 tests/

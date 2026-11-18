@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.162.2",
+    "pyarrow>=26.0.1",
     "pydantic-settings>=2.16.2",
     "sqlalchemy>=2.1.9",
     "uvicorn[standard]>=0.54.0",
@@ -16,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 tick = "tick.main:main"
+tick-ingest-ths-daily = "tick.market.ingest_ths:main"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]
