@@ -25,20 +25,20 @@ describe('UsersDeleteDialog', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('renders the dialog with the correct title, description, input and buttons', async () => {
-    const { getByText, getByRole } = await render(
+    const { getByText, getByRole, getByPlaceholder } = await render(
       <UsersDeleteDialog open onOpenChange={vi.fn()} currentRow={MOCK_USER} />
     )
 
     const title = getByRole('heading', {
       level: 2,
-      name: /Delete User/i,
+      name: /删除用户/i,
     })
     const desc = getByText(
-      new RegExp(`Are you sure you want to delete ${MOCK_USER.username}?`, 'i')
+      new RegExp(`确定要删除.*${MOCK_USER.username}`, 'i')
     )
-    const usernameInput = getByRole('textbox', { name: /Username/i })
-    const cancelButton = getByRole('button', { name: /Cancel/i })
-    const deleteButton = getByRole('button', { name: /Delete/i })
+    const usernameInput = getByPlaceholder('输入用户名以确认删除')
+    const cancelButton = getByRole('button', { name: /取消/i })
+    const deleteButton = getByRole('button', { name: /删除/i })
 
     await expect.element(title).toBeInTheDocument()
     await expect.element(desc).toBeInTheDocument()
@@ -49,12 +49,12 @@ describe('UsersDeleteDialog', () => {
   })
 
   it('keeps the delete button disabled until the username input is filled correctly', async () => {
-    const { getByRole } = await render(
+    const { getByRole, getByPlaceholder } = await render(
       <UsersDeleteDialog open onOpenChange={vi.fn()} currentRow={MOCK_USER} />
     )
 
-    const usernameInput = getByRole('textbox', { name: /Username/i })
-    const deleteButton = getByRole('button', { name: /Delete/i })
+    const usernameInput = getByPlaceholder('输入用户名以确认删除')
+    const deleteButton = getByRole('button', { name: /删除/i })
 
     await expect.element(deleteButton).toBeDisabled()
 
@@ -75,7 +75,7 @@ describe('UsersDeleteDialog', () => {
       />
     )
 
-    const cancelButton = getByRole('button', { name: /Cancel/i })
+    const cancelButton = getByRole('button', { name: /取消/i })
     await userEvent.click(cancelButton)
 
     expect(onOpenChange).toHaveBeenCalledOnce()
@@ -101,13 +101,13 @@ describe('UsersDeleteDialog', () => {
       )
     }
 
-    const { getByRole } = await render(<Harness />)
+    const { getByRole, getByPlaceholder } = await render(<Harness />)
 
-    const usernameInput = getByRole('textbox', { name: /Username/i })
+    const usernameInput = getByPlaceholder('输入用户名以确认删除')
     await userEvent.fill(usernameInput, MOCK_USER.username)
     await expect.element(usernameInput).toHaveValue(MOCK_USER.username)
 
-    const closeButton = getByRole('button', { name: /Cancel/i })
+    const closeButton = getByRole('button', { name: /取消/i })
     await userEvent.click(closeButton)
 
     const reopenButton = getByRole('button', { name: /Reopen/i })
@@ -117,7 +117,7 @@ describe('UsersDeleteDialog', () => {
 
   it('shows the submitted data when deleted successfully', async () => {
     const onOpenChange = vi.fn()
-    const { getByRole } = await render(
+    const { getByRole, getByPlaceholder } = await render(
       <UsersDeleteDialog
         open
         onOpenChange={onOpenChange}
@@ -125,8 +125,8 @@ describe('UsersDeleteDialog', () => {
       />
     )
 
-    const usernameInput = getByRole('textbox', { name: /Username/i })
-    const deleteButton = getByRole('button', { name: /Delete/i })
+    const usernameInput = getByPlaceholder('输入用户名以确认删除')
+    const deleteButton = getByRole('button', { name: /删除/i })
 
     await expect.element(deleteButton).toBeDisabled()
 
@@ -142,13 +142,13 @@ describe('UsersDeleteDialog', () => {
     expect(showSubmittedData).toHaveBeenCalledOnce()
     expect(showSubmittedData).toHaveBeenCalledWith(
       MOCK_USER,
-      'The following user has been deleted:'
+      '以下用户已被删除：'
     )
   })
 
   it('deletes successfully when press Enter key on the username input', async () => {
     const onOpenChange = vi.fn()
-    const { getByRole } = await render(
+    const { getByRole, getByPlaceholder } = await render(
       <UsersDeleteDialog
         open
         onOpenChange={onOpenChange}
@@ -156,8 +156,8 @@ describe('UsersDeleteDialog', () => {
       />
     )
 
-    const usernameInput = getByRole('textbox', { name: /Username/i })
-    const deleteButton = getByRole('button', { name: /Delete/i })
+    const usernameInput = getByPlaceholder('输入用户名以确认删除')
+    const deleteButton = getByRole('button', { name: /删除/i })
 
     await expect.element(deleteButton).toBeDisabled()
 
@@ -172,7 +172,7 @@ describe('UsersDeleteDialog', () => {
     expect(showSubmittedData).toHaveBeenCalledOnce()
     expect(showSubmittedData).toHaveBeenCalledWith(
       MOCK_USER,
-      'The following user has been deleted:'
+      '以下用户已被删除：'
     )
   })
 })

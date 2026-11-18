@@ -22,15 +22,15 @@ describe('OtpForm', () => {
     vi.clearAllMocks()
 
     screen = await render(<OtpForm />)
-    otpInput = screen.getByLabelText(/^One-Time Password$/i)
-    verifyButton = screen.getByRole('button', { name: /^Verify$/i })
+    otpInput = screen.getByLabelText(/^一次性验证码$/i)
+    verifyButton = screen.getByRole('button', { name: /^验证$/i })
   })
 
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it('disables Verify until 6 digits are entered', async () => {
+  it('disables 验证 until 6 digits are entered', async () => {
     await expect.element(verifyButton).toBeDisabled()
 
     await userEvent.fill(otpInput, '12345')

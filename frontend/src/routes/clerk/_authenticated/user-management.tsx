@@ -57,10 +57,10 @@ function UserManagement() {
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>
           <div>
-            <h2 className='text-2xl font-bold tracking-tight'>User List</h2>
+            <h2 className='text-2xl font-bold tracking-tight'>用户列表</h2>
             <div className='flex gap-1'>
               <p className='text-muted-foreground'>
-                Manage your users and their roles here.
+                在此管理用户及其角色。
               </p>
               <LearnMore
                 open={opened}
@@ -124,7 +124,7 @@ function Unauthorized() {
     <div className='h-svh'>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
         <h1 className='text-[7rem] leading-tight font-bold'>401</h1>
-        <span className='font-medium'>Unauthorized Access</span>
+        <span className='font-medium'>未授权访问</span>
         <p className='text-center text-muted-foreground'>
           You must be authenticated via Clerk{' '}
           <sup>
@@ -139,7 +139,7 @@ function Unauthorized() {
                 </Link>
                 .{' '}
               </p>
-              <p>You must first sign in using Clerk to access this route. </p>
+              <p>须先使用 Clerk 登录才能访问此页面。</p>
 
               <p className='mt-4'>
                 After signing in, you'll be able to sign out or delete your
@@ -148,14 +148,14 @@ function Unauthorized() {
             </LearnMore>
           </sup>
           <br />
-          to access this resource.
+          以访问此资源。
         </p>
         <div className='mt-6 flex gap-4'>
           <Button variant='outline' onClick={() => history.go(-1)}>
-            Go Back
+            返回
           </Button>
           <Button onClick={() => navigate({ to: '/clerk/sign-in' })}>
-            <ClerkLogo className='invert' /> Sign in
+            <ClerkLogo className='invert' /> 登录
           </Button>
         </div>
         <div className='mt-4 h-8 text-center'>

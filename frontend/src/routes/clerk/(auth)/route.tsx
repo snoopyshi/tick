@@ -18,7 +18,7 @@ function ClerkAuthLayout() {
           className='relative z-20 flex items-center text-lg font-medium'
         >
           <Logo className='me-2' />
-          Shadcn Admin
+          Shadcn 管理后台
         </Link>
 
         <ClerkFullLogo className='relative m-auto size-96' />
@@ -42,15 +42,15 @@ function ClerkAuthLayout() {
             }}
             contentProps={{ side: 'top', align: 'end', className: 'w-auto' }}
           >
-            Welcome to the example Clerk auth page. <br />
-            Back to{' '}
+            欢迎来到 Clerk 认证示例页面。 <br />
+            返回{' '}
             <Link
               to='/'
               className='underline decoration-dashed underline-offset-2'
             >
-              Dashboard
+              仪表盘
             </Link>{' '}
-            ?
+            ？
           </LearnMore>
           <Outlet />
         </div>
