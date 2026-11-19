@@ -4,70 +4,80 @@ import { DataTableColumnHeader } from '@/components/data-table'
 import { assetTypeLabel } from '../data/data'
 import { type Instrument } from '../data/schema'
 
-export const instrumentsColumns: ColumnDef<Instrument>[] = [
-  {
-    accessorKey: 'symbol',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='代码' />
-    ),
-    cell: ({ row }) => (
-      <span className='font-medium'>{row.getValue('symbol')}</span>
-    ),
-  },
-  {
-    accessorKey: 'name',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='名称' />
-    ),
-    meta: {
-      className: 'ps-1 max-w-0 w-1/3',
-      tdClassName: 'ps-4',
+export function createInstrumentsColumns(
+  onSymbolClick: (instrument: Instrument) => void
+): ColumnDef<Instrument>[] {
+  return [
+    {
+      accessorKey: 'symbol',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='代码' />
+      ),
+      cell: ({ row }) => (
+        <button
+          type='button'
+          className='font-medium text-primary underline-offset-4 hover:underline'
+          onClick={() => onSymbolClick(row.original)}
+        >
+          {row.getValue('symbol')}
+        </button>
+      ),
     },
-    cell: ({ row }) => (
-      <span className='truncate'>{row.getValue('name')}</span>
-    ),
-  },
-  {
-    accessorKey: 'exchange',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='交易所' />
-    ),
-    cell: ({ row }) => {
-      const exchange = row.getValue('exchange') as string | null
-      return <span>{exchange ?? '—'}</span>
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='名称' />
+      ),
+      meta: {
+        className: 'ps-1 max-w-0 w-1/3',
+        tdClassName: 'ps-4',
+      },
+      cell: ({ row }) => (
+        <span className='truncate'>{row.getValue('name')}</span>
+      ),
     },
-  },
-  {
-    accessorKey: 'asset_type',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='类型' />
-    ),
-    cell: ({ row }) => {
-      const value = String(row.getValue('asset_type'))
-      return (
-        <Badge variant='outline' className='capitalize'>
-          {assetTypeLabel[value] ?? value}
-        </Badge>
-      )
+    {
+      accessorKey: 'exchange',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='交易所' />
+      ),
+      cell: ({ row }) => {
+        const exchange = row.getValue('exchange') as string | null
+        return <span>{exchange ?? '—'}</span>
+      },
     },
-    filterFn: (row, id, value: string[]) => {
-      return value.includes(String(row.getValue(id)))
+    {
+      accessorKey: 'asset_type',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='类型' />
+      ),
+      cell: ({ row }) => {
+        const value = String(row.getValue('asset_type'))
+        return (
+          <Badge variant='outline' className='capitalize'>
+            {assetTypeLabel[value] ?? value}
+          </Badge>
+        )
+      },
+      filterFn: (row, id, value: string[]) => {
+        return value.includes(String(row.getValue(id)))
+      },
     },
-  },
-  {
-    accessorKey: 'list_date',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='上市日期' />
-    ),
-    cell: ({ row }) => {
-      const value = row.getValue('list_date') as string | null
-      return <span>{value ?? '—'}</span>
+    {
+      accessorKey: 'list_date',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='上市日期' />
+      ),
+      cell: ({ row }) => {
+        const value = row.getValue('list_date') as string | null
+        return <span>{value ?? '—'}</span>
+      },
     },
-  },
-  {
-    accessorKey: 'currency',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='币种' />
-    ),
-  },
-]
+    {
+      accessorKey: 'currency',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title='币种' />
+      ),
+    },
+  ]
+}

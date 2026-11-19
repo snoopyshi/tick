@@ -80,13 +80,14 @@ uv run tick-ingest-fuyao-tickers --no-fetch
 
 启动时会把 `market/instruments/instruments.parquet` 与日 K 一并载入进程内存（`symbol → Instrument` / `symbol → OhlcvSeries`）。文件不存在时跳过并打 warning。
 
-标的列表 API：
+标的与行情 API：
 
 ```http
 GET /api/v1/instruments?q=&asset_type=&limit=50&offset=0
+GET /api/v1/ohlcv/1d/{symbol}          # full series; optional ?limit=N
 ```
 
-省略 `asset_type` 时返回全部类型；前端开发经 Vite 把 `/api` 代理到本服务。
+省略 `asset_type` 时返回全部类型；日 K 无数据时返回空 `bars`。前端开发经 Vite 把 `/api` 代理到本服务；标的列表点击代码可弹窗查看日 K。
 
 ## 检查
 

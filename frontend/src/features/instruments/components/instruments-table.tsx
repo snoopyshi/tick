@@ -22,13 +22,18 @@ import {
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { fetchInstruments } from '../api'
 import { assetTypes } from '../data/data'
-import { instrumentsColumns as columns } from './instruments-columns'
+import { type Instrument } from '../data/schema'
+import { createInstrumentsColumns } from './instruments-columns'
+import { InstrumentChartDialog } from './instrument-chart-dialog'
 
 const route = getRouteApi('/_authenticated/instruments/')
 
 export function InstrumentsTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [chartInstrument, setChartInstrument] = useState<Instrument | null>(
+    null
+  )
 
   const {
     globalFilter,
@@ -52,6 +57,11 @@ export function InstrumentsTable() {
     const raw = columnFilters.find((item) => item.id === 'asset_type')?.value
     return Array.isArray(raw) ? (raw as string[]) : []
   }, [columnFilters])
+
+  const columns = useMemo(
+    () => createInstrumentsColumns((instrument) => setChartInstrument(instrument)),
+    []
+  )
 
   const query = useQuery({
     queryKey: [
@@ -181,6 +191,14 @@ export function InstrumentsTable() {
         </Table>
       </div>
       <DataTablePagination table={table} className='mt-auto' />
+
+      <InstrumentChartDialog
+        instrument={chartInstrument}
+        open={chartInstrument !== null}
+        onOpenChange={(open) => {
+          if (!open) setChartInstrument(null)
+        }}
+      />
     </div>
   )
 }

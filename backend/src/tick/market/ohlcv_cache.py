@@ -52,6 +52,35 @@ def clear_ohlcv_1d_cache() -> None:
     _ohlcv_1d.clear()
 
 
+def get_ohlcv_1d_bars(
+    symbol: str,
+    *,
+    limit: int | None = None,
+) -> list[dict[str, str | float]]:
+    """Return daily bars for ``symbol`` (oldest→newest), optionally last ``limit``."""
+    series = _ohlcv_1d.get(symbol)
+    if series is None or len(series) == 0:
+        return []
+
+    start = 0
+    if limit is not None:
+        if limit < 1:
+            raise ValueError("limit must be >= 1")
+        start = max(0, len(series) - limit)
+
+    return [
+        {
+            "time": series.times[i],
+            "open": float(series.open[i]),
+            "high": float(series.high[i]),
+            "low": float(series.low[i]),
+            "close": float(series.close[i]),
+            "volume": float(series.volume[i]),
+        }
+        for i in range(start, len(series))
+    ]
+
+
 def load_ohlcv_1d_into_memory(path: Path | None = None) -> dict[str, OhlcvSeries]:
     """Load canonical daily OHLCV parquet into ``symbol -> OhlcvSeries``."""
     source = path or settings.paths.market_ohlcv_1d
