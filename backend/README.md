@@ -47,13 +47,21 @@ docker run --rm -p 8000:8000 tick
   raw/ths/tickers/
     tickers.parquet                         # 同花顺标的列表快照（经扶摇 API）
   market/ohlcv/1d/
-    a_share_daily_k_1d.parquet              # 系统标准日 K
+    a_share_daily_k_1d.parquet              # 迁移前的单文件日 K
+    manifest.json                           # 迁移后的数据集清单
+    trade_date=YYYY-MM-DD/part.parquet      # 一个交易日、全部标的
   market/corp_actions/
     a_share_corp_actions.parquet            # 系统标准除权事件
   market/instruments/
     instruments.parquet                     # 系统标的主表
     vendor_symbol_map.parquet               # 厂商码 → 系统 symbol
+  market/adjust_factors/
+    a_share_adjust_factors.parquet          # 迁移前的单文件因子
+    manifest.json
+    trade_date=YYYY-MM-DD/part.parquet
 ```
+
+标的和除权事件仍是单文件，旁边有同名清单（`.manifest.json`）。日 K 和复权因子在迁移前也是这种清单；迁移后改用目录里的 `manifest.json`，注册中心优先读它。状态仍是 `ready` / `invalid` / `missing`。
 
 把同花顺原始文件放到 `raw/ths/...` 后转换：
 
@@ -73,18 +81,39 @@ uv run tick-ingest-fuyao-tickers --asset-type a-share-index
 uv run tick-ingest-fuyao-tickers --no-fetch
 ```
 
+日 K 和除权事件都是 `ready` 之后，由这两份标准表计算复权因子（不改写不复权价格）。这是整表重算，适合第一次建库：
+
+```bash
+uv run tick-ingest-adjust-factors
+```
+
+已有单文件日 K 时，先拆成按交易日分区，原文件保留：
+
+```bash
+uv run tick-migrate-trade-date-partitions
+```
+
+之后盘后只提交本批交易日。停更数天时把这些日期放进同一批。单文件还在、数据集清单还没有时，这条命令会拒绝执行：
+
+```bash
+uv run tick-ingest-ohlcv-batch --bars path/to/bars.parquet
+```
+
 - 标准日 K：`symbol, trade_date, open, high, low, close, volume, amount, adjust, vendor, currency`
+- 标准复权因子：`symbol, trade_date, factor, vendor`（后复权累计乘数；前复权在读取时用最后一根因子去除）
 - 标准除权事件：`symbol, ex_date, dividend_per_share, bonus_per_share, allotment_ratio, allotment_price, vendor, currency`
 - 标准标的：`symbol, ticker, name, exchange, asset_type, currency, list_date, end_date, last_trade_date, last_delivery_date, updated_at`
 - 厂商映射：`vendor, vendor_symbol, symbol, is_primary`
 
-启动时会把 `market/instruments/instruments.parquet` 与日 K 一并载入进程内存（`symbol → Instrument` / `symbol → OhlcvSeries`）。文件不存在时跳过并打 warning。
+启动时会把 `market/instruments/instruments.parquet`、日 K 和复权因子一并载入进程内存。日 K 接口默认用因子把开高低收换成前复权，成交量保持不复权。日 K 或因子已有数据集清单时，按清单拼接各交易日分区。文件不存在时跳过并打 warning。
 
 标的与行情 API：
 
 ```http
 GET /api/v1/instruments?q=&asset_type=&limit=50&offset=0
-GET /api/v1/ohlcv/1d/{symbol}          # full series; optional ?limit=N
+GET /api/v1/ohlcv/1d/{symbol}          # 默认前复权；adjust=none 为不复权；optional ?limit=N
+GET /api/v1/data/capabilities
+GET /api/v1/data/capabilities/{id}
 ```
 
 省略 `asset_type` 时返回全部类型；日 K 无数据时返回空 `bars`。前端开发经 Vite 把 `/api` 代理到本服务；标的列表点击代码可弹窗查看日 K。

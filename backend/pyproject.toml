@@ -23,6 +23,11 @@ tick-ingest-ths-daily = "tick.market.ingest_ths:main"
 tick-ingest-ths-corp-actions = "tick.market.ingest_ths_corp_actions:main"
 ## 标的列表
 tick-ingest-fuyao-tickers = "tick.market.ingest_fuyao_tickers:main"
+## 复权因子（由不复权日 K 与除权事件计算）
+tick-ingest-adjust-factors = "tick.market.ingest_adjust_factors:main"
+## 按交易日增量
+tick-ingest-ohlcv-batch = "tick.market.ingest_trade_date_batch:main"
+tick-migrate-trade-date-partitions = "tick.market.migrate_trade_date_partitions:main"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]

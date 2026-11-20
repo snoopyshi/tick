@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import pyarrow as pa
 import pyarrow.parquet as pq
 
 from tick.core.config import settings
@@ -82,7 +84,13 @@ def get_ohlcv_1d_bars(
 
 
 def load_ohlcv_1d_into_memory(path: Path | None = None) -> dict[str, OhlcvSeries]:
-    """Load canonical daily OHLCV parquet into ``symbol -> OhlcvSeries``."""
+    """Load canonical daily OHLCV parquet into ``symbol -> OhlcvSeries``.
+
+    When the caller does not pass ``path`` and a trade-date dataset manifest
+    exists, partitions are concatenated. An explicit ``path`` still reads one file.
+    """
+    if path is None and settings.paths.ohlcv_1d_dataset_manifest.is_file():
+        return _load_partitioned_ohlcv()
     source = path or settings.paths.market_ohlcv_1d
     clear_ohlcv_1d_cache()
 
@@ -96,7 +104,40 @@ def load_ohlcv_1d_into_memory(path: Path | None = None) -> dict[str, OhlcvSeries
     table = table.sort_by(
         [("symbol", "ascending"), ("trade_date", "ascending")],
     )
+    _fill_cache(table)
+    elapsed = time.perf_counter() - started
+    logger.info(
+        "ohlcv 1d cache ready: symbols=%s bars=%s elapsed=%.2fs",
+        len(_ohlcv_1d),
+        table.num_rows,
+        elapsed,
+    )
+    return _ohlcv_1d
 
+
+def _load_partitioned_ohlcv() -> dict[str, OhlcvSeries]:
+    """Read every partition listed in the dataset manifest."""
+    clear_ohlcv_1d_cache()
+    manifest_path = settings.paths.ohlcv_1d_dataset_manifest
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    dates = sorted(item["trade_date"] for item in payload["partitions"])
+    if not dates:
+        return _ohlcv_1d
+    tables = [
+        pq.read_table(
+            settings.paths.ohlcv_1d_partition(trade_date),
+            columns=list(_OHLCV_COLUMNS),
+        )
+        for trade_date in dates
+    ]
+    table = pa.concat_tables(tables).sort_by(
+        [("symbol", "ascending"), ("trade_date", "ascending")],
+    )
+    _fill_cache(table)
+    return _ohlcv_1d
+
+
+def _fill_cache(table: pa.Table) -> None:
     symbols = table["symbol"].to_pylist()
     times = [
         value.isoformat() if hasattr(value, "isoformat") else str(value)
@@ -126,12 +167,3 @@ def load_ohlcv_1d_into_memory(path: Path | None = None) -> dict[str, OhlcvSeries
             amount=amounts[i:j],
         )
         i = j
-
-    elapsed = time.perf_counter() - started
-    logger.info(
-        "ohlcv 1d cache ready: symbols=%s bars=%s elapsed=%.2fs",
-        len(_ohlcv_1d),
-        n,
-        elapsed,
-    )
-    return _ohlcv_1d

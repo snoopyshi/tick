@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -12,4 +14,5 @@ class OhlcvBarOut(BaseModel):
 
 class OhlcvSeriesOut(BaseModel):
     symbol: str
+    adjust: Literal["qfq", "none"]
     bars: list[OhlcvBarOut] = Field(default_factory=list)

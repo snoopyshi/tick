@@ -41,7 +41,7 @@ export function InstrumentChartDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            已加载全部日 K；默认展示最近 {DEFAULT_VISIBLE_BARS}{' '}
+            已加载全部前复权日 K；默认展示最近 {DEFAULT_VISIBLE_BARS}{' '}
             根（可左右拖动查看更多）。
           </DialogDescription>
         </DialogHeader>

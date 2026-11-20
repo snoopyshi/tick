@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import argparse
 import logging
-import tempfile
 from pathlib import Path
 
 import pyarrow.parquet as pq
 
 from tick.core.config import settings
 from tick.core.logging import configure_tick_logging
+from tick.market.manifest import (
+    count_symbols,
+    min_max_date,
+    produced_at_now,
+    publish_parquet_with_manifest,
+)
+from tick.market.schema import CORP_ACTION_COLUMNS, VENDOR_THS
 from tick.market.ths_corp_actions_adapter import ths_corp_actions_to_canonical
 
 logger = logging.getLogger(__name__)
@@ -35,21 +41,21 @@ def ingest_ths_corp_actions(
 
     canonical = ths_corp_actions_to_canonical(raw)
     logger.info("canonical rows=%s writing %s", canonical.num_rows, target)
-
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        dir=target.parent,
-        suffix=".parquet.tmp",
-        delete=False,
-    ) as tmp:
-        tmp_path = Path(tmp.name)
-
-    try:
-        pq.write_table(canonical, tmp_path, compression="zstd")
-        tmp_path.replace(target)
-    except Exception:
-        tmp_path.unlink(missing_ok=True)
-        raise
+    low, high = min_max_date(canonical, "ex_date")
+    manifest: dict = {
+        "capability_id": "market.corp_actions",
+        "schema_version": 1,
+        "columns": list(CORP_ACTION_COLUMNS),
+        "rows": canonical.num_rows,
+        "symbols": count_symbols(canonical),
+        "vendor": VENDOR_THS,
+        "snapshot_id": source.stem,
+        "produced_at": produced_at_now(),
+    }
+    if low is not None and high is not None:
+        manifest["min_date"] = low
+        manifest["max_date"] = high
+    publish_parquet_with_manifest(canonical, target, manifest)
 
     logger.info("ingest done: %s (%s rows)", target, canonical.num_rows)
     return target

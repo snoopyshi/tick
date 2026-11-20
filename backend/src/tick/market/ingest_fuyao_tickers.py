@@ -17,7 +17,19 @@ from tick.market.fuyao_tickers_adapter import (
     fuyao_items_to_raw_table,
     fuyao_tickers_to_canonical,
 )
-from tick.market.schema import ASSET_TYPES, DEFAULT_TICKER_ASSET_TYPES
+from tick.market.manifest import (
+    asset_type_counts,
+    count_symbols,
+    produced_at_now,
+    publish_parquet_with_manifest,
+    require_unique_keys,
+)
+from tick.market.schema import (
+    ASSET_TYPES,
+    DEFAULT_TICKER_ASSET_TYPES,
+    INSTRUMENT_COLUMNS,
+    VENDOR_THS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +48,15 @@ def _atomic_write_parquet(table: pa.Table, target: Path) -> None:
     except Exception:
         tmp_path.unlink(missing_ok=True)
         raise
+
+
+def _snapshot_id(raw: pa.Table) -> str:
+    if "snapshot_ms" not in raw.column_names:
+        return "tickers"
+    values = {value for value in raw["snapshot_ms"].to_pylist() if value is not None}
+    if len(values) == 1:
+        return str(next(iter(values)))
+    return "tickers"
 
 
 def _parse_asset_types(value: str | None) -> list[str] | None:
@@ -95,12 +116,24 @@ def ingest_fuyao_tickers(
         raw = pq.read_table(source)
 
     instruments, vendor_map = fuyao_tickers_to_canonical(raw)
+    require_unique_keys(instruments, ("symbol",))
     logger.info(
         "canonical instruments=%s vendor_map=%s",
         instruments.num_rows,
         vendor_map.num_rows,
     )
-    _atomic_write_parquet(instruments, instruments_target)
+    manifest = {
+        "capability_id": "market.instruments",
+        "schema_version": 1,
+        "columns": list(INSTRUMENT_COLUMNS),
+        "rows": instruments.num_rows,
+        "symbols": count_symbols(instruments),
+        "vendor": VENDOR_THS,
+        "snapshot_id": _snapshot_id(raw),
+        "produced_at": produced_at_now(),
+        "asset_types": asset_type_counts(instruments),
+    }
+    publish_parquet_with_manifest(instruments, instruments_target, manifest)
     _atomic_write_parquet(vendor_map, vendor_map_target)
     logger.info(
         "ingest done: %s (%s rows), %s (%s rows)",

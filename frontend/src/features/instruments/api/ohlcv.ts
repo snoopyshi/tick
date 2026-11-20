@@ -12,6 +12,7 @@ const ohlcvBarSchema = z.object({
 
 const ohlcvSeriesSchema = z.object({
   symbol: z.string(),
+  adjust: z.enum(['qfq', 'none']),
   bars: z.array(ohlcvBarSchema),
 })
 

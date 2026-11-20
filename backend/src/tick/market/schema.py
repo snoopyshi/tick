@@ -46,6 +46,14 @@ INSTRUMENT_COLUMNS: Final[tuple[str, ...]] = (
     "updated_at",
 )
 
+# Cumulative backward-adjust factor aligned to each unadjusted daily bar.
+ADJUST_FACTOR_COLUMNS: Final[tuple[str, ...]] = (
+    "symbol",
+    "trade_date",
+    "factor",
+    "vendor",
+)
+
 # Maps vendor-native codes onto system symbols.
 VENDOR_SYMBOL_MAP_COLUMNS: Final[tuple[str, ...]] = (
     "vendor",

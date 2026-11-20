@@ -147,3 +147,12 @@ def test_ingest_fuyao_tickers_from_raw_no_fetch(tmp_path, monkeypatch) -> None:
         "a-share-index",
     ]
     assert vendor_map["vendor"].to_pylist() == [VENDOR_THS, VENDOR_THS, VENDOR_THS]
+
+    from tick.market.catalog import get_capability
+
+    view = get_capability("market.instruments")
+    assert view is not None
+    assert view.status == "ready"
+    assert view.coverage is not None
+    assert view.coverage.snapshot_id == "1700000000000"
+    assert view.coverage.asset_types == {"a-share": 2, "a-share-index": 1}

@@ -9,6 +9,7 @@ from tick import __version__
 from tick.api.router import api_router
 from tick.core.config import settings
 from tick.core.logging import configure_tick_logging
+from tick.market.factor_cache import load_adjust_factors_into_memory
 from tick.market.instruments_cache import load_instruments_into_memory
 from tick.market.ohlcv_cache import load_ohlcv_1d_into_memory
 from tick.web import mount_frontend
@@ -20,6 +21,7 @@ async def lifespan(_application: FastAPI):
     settings.paths.ensure()
     load_instruments_into_memory()
     load_ohlcv_1d_into_memory()
+    load_adjust_factors_into_memory()
     yield
 
 

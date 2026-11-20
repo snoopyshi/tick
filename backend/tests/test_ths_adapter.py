@@ -62,3 +62,48 @@ def test_ingest_ths_daily_writes_canonical_parquet(tmp_path, monkeypatch) -> Non
     assert table.num_rows == 2
     assert table.column_names == list(OHLCV_1D_COLUMNS)
     assert table["vendor"].to_pylist() == [VENDOR_THS, VENDOR_THS]
+
+    from tick.market.catalog import get_capability
+
+    view = get_capability("market.ohlcv.1d")
+    assert view is not None
+    assert view.status == "ready"
+    assert view.coverage is not None
+    assert view.coverage.snapshot_id == paths.raw_ths_ohlcv_1d.stem
+
+
+def test_ingest_ths_daily_rejects_adjusted_bars(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "data_dir", tmp_path / "data")
+    paths = settings.paths
+    paths.ensure()
+    raw = _sample_ths_table()
+    raw = raw.set_column(
+        raw.schema.get_field_index("adjusted"),
+        "adjusted",
+        pa.array(["qfq", "qfq"]),
+    )
+    pq.write_table(raw, paths.raw_ths_ohlcv_1d)
+    paths.market_ohlcv_1d.parent.mkdir(parents=True, exist_ok=True)
+    paths.market_ohlcv_1d.write_bytes(b"keep")
+
+    with pytest.raises(ValueError, match="adjust must be none"):
+        ingest_ths_daily()
+    assert paths.market_ohlcv_1d.read_bytes() == b"keep"
+
+
+def test_ingest_ths_daily_rejects_duplicate_keys(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "data_dir", tmp_path / "data")
+    paths = settings.paths
+    paths.ensure()
+    raw = _sample_ths_table()
+    raw = raw.set_column(
+        raw.schema.get_field_index("date_ms"),
+        "date_ms",
+        pa.array([1479312000000, 1479312000000]),
+    )
+    pq.write_table(raw, paths.raw_ths_ohlcv_1d)
+    paths.market_ohlcv_1d.write_bytes(b"keep")
+
+    with pytest.raises(ValueError, match="duplicate symbol, trade_date"):
+        ingest_ths_daily()
+    assert paths.market_ohlcv_1d.read_bytes() == b"keep"

@@ -15,6 +15,7 @@ MARKET_OHLCV_1D_FILENAME = "a_share_daily_k_1d.parquet"
 MARKET_CORP_ACTIONS_FILENAME = "a_share_corp_actions.parquet"
 MARKET_INSTRUMENTS_FILENAME = "instruments.parquet"
 MARKET_VENDOR_SYMBOL_MAP_FILENAME = "vendor_symbol_map.parquet"
+MARKET_ADJUST_FACTORS_FILENAME = "a_share_adjust_factors.parquet"
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +91,35 @@ class DataPaths:
         """Canonical vendor → system symbol map parquet."""
         return self.market_instruments_dir / MARKET_VENDOR_SYMBOL_MAP_FILENAME
 
+    @property
+    def market_adjust_factors_dir(self) -> Path:
+        return self.root / "market" / "adjust_factors"
+
+    @property
+    def market_adjust_factors(self) -> Path:
+        """Canonical daily backward-adjust factors."""
+        return self.market_adjust_factors_dir / MARKET_ADJUST_FACTORS_FILENAME
+
+    @property
+    def ohlcv_1d_dataset_manifest(self) -> Path:
+        """Trade-date partitioned daily bars catalog."""
+        return self.market_ohlcv_1d_dir / "manifest.json"
+
+    def ohlcv_1d_partition(self, trade_date: str) -> Path:
+        """One trade date of unadjusted daily bars."""
+        return self.market_ohlcv_1d_dir / f"trade_date={trade_date}" / "part.parquet"
+
+    @property
+    def adjust_factors_dataset_manifest(self) -> Path:
+        """Trade-date partitioned adjust-factor catalog."""
+        return self.market_adjust_factors_dir / "manifest.json"
+
+    def adjust_factor_partition(self, trade_date: str) -> Path:
+        """One trade date of backward-adjust factors."""
+        return (
+            self.market_adjust_factors_dir / f"trade_date={trade_date}" / "part.parquet"
+        )
+
     def ensure(self) -> None:
         """Create the first-version data directories if missing."""
         self.db_dir.mkdir(parents=True, exist_ok=True)
@@ -99,6 +129,7 @@ class DataPaths:
         self.market_ohlcv_1d_dir.mkdir(parents=True, exist_ok=True)
         self.market_corp_actions_dir.mkdir(parents=True, exist_ok=True)
         self.market_instruments_dir.mkdir(parents=True, exist_ok=True)
+        self.market_adjust_factors_dir.mkdir(parents=True, exist_ok=True)
         logger.info(
             "data ready: root=%s ohlcv_1d=%s (exists=%s) corp_actions=%s "
             "(exists=%s) instruments=%s (exists=%s)",

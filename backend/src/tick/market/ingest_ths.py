@@ -4,13 +4,21 @@ from __future__ import annotations
 
 import argparse
 import logging
-import tempfile
 from pathlib import Path
 
 import pyarrow.parquet as pq
 
 from tick.core.config import settings
 from tick.core.logging import configure_tick_logging
+from tick.market.manifest import (
+    count_symbols,
+    min_max_date,
+    produced_at_now,
+    publish_parquet_with_manifest,
+    require_adjust_none,
+    require_unique_keys,
+)
+from tick.market.schema import OHLCV_1D_COLUMNS, VENDOR_THS
 from tick.market.ths_adapter import ths_daily_to_canonical
 
 logger = logging.getLogger(__name__)
@@ -34,26 +42,29 @@ def ingest_ths_daily(
     logger.info("raw rows=%s cols=%s", raw.num_rows, raw.column_names)
 
     canonical = ths_daily_to_canonical(raw)
+    require_adjust_none(canonical)
+    require_unique_keys(canonical, ("symbol", "trade_date"))
     logger.info(
         "canonical rows=%s writing %s",
         canonical.num_rows,
         target,
     )
-
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        dir=target.parent,
-        suffix=".parquet.tmp",
-        delete=False,
-    ) as tmp:
-        tmp_path = Path(tmp.name)
-
-    try:
-        pq.write_table(canonical, tmp_path, compression="zstd")
-        tmp_path.replace(target)
-    except Exception:
-        tmp_path.unlink(missing_ok=True)
-        raise
+    low, high = min_max_date(canonical, "trade_date")
+    manifest: dict = {
+        "capability_id": "market.ohlcv.1d",
+        "schema_version": 1,
+        "columns": list(OHLCV_1D_COLUMNS),
+        "rows": canonical.num_rows,
+        "symbols": count_symbols(canonical),
+        "vendor": VENDOR_THS,
+        "snapshot_id": source.stem,
+        "produced_at": produced_at_now(),
+        "adjust": "none",
+    }
+    if low is not None and high is not None:
+        manifest["min_date"] = low
+        manifest["max_date"] = high
+    publish_parquet_with_manifest(canonical, target, manifest)
 
     logger.info("ingest done: %s (%s rows)", target, canonical.num_rows)
     return target
