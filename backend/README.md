@@ -46,12 +46,16 @@ docker run --rm -p 8000:8000 tick
     a_share_adjustment_factors_event_none_all_20261117.parquet
   raw/ths/tickers/
     tickers.parquet                         # 同花顺标的列表快照（经扶摇 API）
+  raw/ths/calendar/
+    trading_days.parquet                    # 同花顺 A 股交易日快照（经扶摇 API）
   market/ohlcv/1d/
     a_share_daily_k_1d.parquet              # 迁移前的单文件日 K
     manifest.json                           # 迁移后的数据集清单
     trade_date=YYYY-MM-DD/part.parquet      # 一个交易日、全部标的
   market/corp_actions/
     a_share_corp_actions.parquet            # 系统标准除权事件
+  market/calendar/
+    a_share_trading_days.parquet            # A 股交易日
   market/instruments/
     instruments.parquet                     # 系统标的主表
     vendor_symbol_map.parquet               # 厂商码 → 系统 symbol
@@ -81,6 +85,14 @@ uv run tick-ingest-fuyao-tickers --asset-type a-share-index
 uv run tick-ingest-fuyao-tickers --no-fetch
 ```
 
+拉取 A 股交易日（默认从 2016-11-17 到上海时区的今天；单次接口最多十年，更长区间会拆开请求）：
+
+```bash
+uv run tick-ingest-fuyao-calendar
+uv run tick-ingest-fuyao-calendar --start-date 20161117 --end-date 20261117
+uv run tick-ingest-fuyao-calendar --no-fetch
+```
+
 日 K 和除权事件都是 `ready` 之后，由这两份标准表计算复权因子（不改写不复权价格）。这是整表重算，适合第一次建库：
 
 ```bash
@@ -102,6 +114,7 @@ uv run tick-ingest-ohlcv-batch --bars path/to/bars.parquet
 - 标准日 K：`symbol, trade_date, open, high, low, close, volume, amount, adjust, vendor, currency`
 - 标准复权因子：`symbol, trade_date, factor, vendor`（后复权累计乘数；前复权在读取时用最后一根因子去除）
 - 标准除权事件：`symbol, ex_date, dividend_per_share, bonus_per_share, allotment_ratio, allotment_price, vendor, currency`
+- 标准交易日历：`trade_date, vendor`（一行一个 A 股交易日，不含休市日）
 - 标准标的：`symbol, ticker, name, exchange, asset_type, currency, list_date, end_date, last_trade_date, last_delivery_date, updated_at`
 - 厂商映射：`vendor, vendor_symbol, symbol, is_primary`
 

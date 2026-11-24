@@ -15,6 +15,7 @@ from tick.market.schema import (
     CORP_ACTION_COLUMNS,
     INSTRUMENT_COLUMNS,
     OHLCV_1D_COLUMNS,
+    TRADING_CALENDAR_COLUMNS,
 )
 
 _ISSUE_ORDER = (
@@ -112,6 +113,16 @@ CAPABILITIES: tuple[CapabilityDecl, ...] = (
         depends_on=("market.ohlcv.1d", "market.corp_actions"),
         relative_path="market/adjust_factors/a_share_adjust_factors.parquet",
         producer="tick-ingest-adjust-factors",
+    ),
+    CapabilityDecl(
+        id="market.trading_calendar",
+        title="交易日历",
+        grain=("trade_date",),
+        columns=TRADING_CALENDAR_COLUMNS,
+        adjust=None,
+        depends_on=(),
+        relative_path="market/calendar/a_share_trading_days.parquet",
+        producer="tick-ingest-fuyao-calendar",
     ),
 )
 

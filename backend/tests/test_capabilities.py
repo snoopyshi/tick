@@ -153,7 +153,7 @@ def test_list_endpoint_and_unknown_id() -> None:
     listed = client.get("/api/v1/data/capabilities")
     assert listed.status_code == 200
     body = listed.json()
-    assert body["total"] == 4
+    assert body["total"] == 5
     ohlcv = next(item for item in body["items"] if item["id"] == "market.ohlcv.1d")
     assert ohlcv["status"] == "ready"
     assert ohlcv["path"] == "market/ohlcv/1d/a_share_daily_k_1d.parquet"

@@ -46,6 +46,12 @@ INSTRUMENT_COLUMNS: Final[tuple[str, ...]] = (
     "updated_at",
 )
 
+# A-share trading days. No symbol: one row is one session.
+TRADING_CALENDAR_COLUMNS: Final[tuple[str, ...]] = (
+    "trade_date",
+    "vendor",
+)
+
 # Cumulative backward-adjust factor aligned to each unadjusted daily bar.
 ADJUST_FACTOR_COLUMNS: Final[tuple[str, ...]] = (
     "symbol",

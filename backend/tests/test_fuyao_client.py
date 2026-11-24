@@ -1,5 +1,6 @@
 import io
 import json
+from datetime import date
 from urllib.error import HTTPError
 
 import pytest
@@ -8,6 +9,8 @@ from tick.market.fuyao_client import (
     FuyaoApiError,
     fetch_all_tickers,
     fetch_ticker_list_page,
+    fetch_trading_day_range,
+    trading_day_windows,
 )
 
 
@@ -121,3 +124,48 @@ def test_fetch_ticker_list_page_http_error(monkeypatch: pytest.MonkeyPatch) -> N
     )
     with pytest.raises(FuyaoApiError, match="HTTP 500"):
         fetch_ticker_list_page(base_url="https://fuyao.example", api_key="k")
+
+
+def test_ten_year_window_stops_on_the_anniversary() -> None:
+    assert trading_day_windows(date(2020, 2, 29), date(2030, 2, 28)) == [
+        (date(2020, 2, 29), date(2030, 2, 28))
+    ]
+    assert trading_day_windows(date(2016, 11, 17), date(2026, 11, 23)) == [
+        (date(2016, 11, 17), date(2026, 11, 17)),
+        (date(2026, 11, 18), date(2026, 11, 23)),
+    ]
+
+
+def test_fetch_trading_day_range_splits_ten_year_windows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    urls: list[str] = []
+
+    def fake_urlopen(request, timeout=60.0):  # noqa: ARG001
+        urls.append(request.full_url)
+        return _FakeResponse(
+            {
+                "code": 0,
+                "message": "success",
+                "data": {"timestamp": 5, "item": []},
+            }
+        )
+
+    monkeypatch.setattr(
+        "tick.market.fuyao_client.urllib.request.urlopen",
+        fake_urlopen,
+    )
+    items, snapshot_ms = fetch_trading_day_range(
+        base_url="https://fuyao.example",
+        api_key="test-key",
+        start=date(2016, 11, 17),
+        end=date(2026, 11, 23),
+    )
+    assert items == []
+    assert snapshot_ms == 5
+    assert urls == [
+        "https://fuyao.example/api/a-share/calendar/trading-days"
+        "?start_date=20161117&end_date=20261117",
+        "https://fuyao.example/api/a-share/calendar/trading-days"
+        "?start_date=20261118&end_date=20261123",
+    ]

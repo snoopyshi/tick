@@ -10,12 +10,14 @@ RAW_THS_CORP_ACTIONS_FILENAME = (
     "a_share_adjustment_factors_event_none_all_20261117.parquet"
 )
 RAW_THS_TICKERS_FILENAME = "tickers.parquet"
+RAW_THS_CALENDAR_FILENAME = "trading_days.parquet"
 # Stable canonical filenames used by strategies / backtests / UI.
 MARKET_OHLCV_1D_FILENAME = "a_share_daily_k_1d.parquet"
 MARKET_CORP_ACTIONS_FILENAME = "a_share_corp_actions.parquet"
 MARKET_INSTRUMENTS_FILENAME = "instruments.parquet"
 MARKET_VENDOR_SYMBOL_MAP_FILENAME = "vendor_symbol_map.parquet"
 MARKET_ADJUST_FACTORS_FILENAME = "a_share_adjust_factors.parquet"
+MARKET_CALENDAR_FILENAME = "a_share_trading_days.parquet"
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +80,24 @@ class DataPaths:
         return self.raw_ths_tickers_dir / RAW_THS_TICKERS_FILENAME
 
     @property
+    def raw_ths_calendar_dir(self) -> Path:
+        return self.root / "raw" / "ths" / "calendar"
+
+    @property
+    def raw_ths_calendar(self) -> Path:
+        """THS A-share trading-day snapshot via Fuyao."""
+        return self.raw_ths_calendar_dir / RAW_THS_CALENDAR_FILENAME
+
+    @property
+    def market_calendar_dir(self) -> Path:
+        return self.root / "market" / "calendar"
+
+    @property
+    def market_calendar(self) -> Path:
+        """Canonical A-share trading days."""
+        return self.market_calendar_dir / MARKET_CALENDAR_FILENAME
+
+    @property
     def market_instruments_dir(self) -> Path:
         return self.root / "market" / "instruments"
 
@@ -126,6 +146,8 @@ class DataPaths:
         self.raw_ths_ohlcv_1d_dir.mkdir(parents=True, exist_ok=True)
         self.raw_ths_corp_actions_dir.mkdir(parents=True, exist_ok=True)
         self.raw_ths_tickers_dir.mkdir(parents=True, exist_ok=True)
+        self.raw_ths_calendar_dir.mkdir(parents=True, exist_ok=True)
+        self.market_calendar_dir.mkdir(parents=True, exist_ok=True)
         self.market_ohlcv_1d_dir.mkdir(parents=True, exist_ok=True)
         self.market_corp_actions_dir.mkdir(parents=True, exist_ok=True)
         self.market_instruments_dir.mkdir(parents=True, exist_ok=True)
